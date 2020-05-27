@@ -64,7 +64,7 @@ Technical requirements:
 
 -	Use any JVM version you feel most comfortable with and not older than 1.6 :-)
 -	You’re allowed to use Open Source libraries and frameworks of your choice, so you’re free to use Mockito, JUnit, Guava, Apache Commons, Spring etc.
-    But please - do not try to show off and don't 'over engineere'; your solution won't be evaluated on the basis of the number of frameworks used but rather on the beauty of your design and the efficiency of the algorithms used.  
+    But please - do not try to show off and don't 'over engineer'; your solution won't be evaluated on the basis of the number of frameworks used but rather on the beauty of your design and the efficiency of the algorithms used.
 - 	please use an Open Source and lightweight database (e.g. h2, Derby), memory or file-based - your choice, that doesn't require installation of any prerequisite softare and can be launched 
 	and torn down as part of your implementation via maven.
 -	We must be able to build and run your program simply by using Maven; in particular:

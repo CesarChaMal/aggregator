@@ -1,7 +1,6 @@
 package com.luxoft.aggregator;
 
 import rx.Observable;
-
 import java.io.*;
 import java.time.*;
 import java.util.*;
@@ -39,7 +38,11 @@ public class StreamDriver {
     }
 
     public static void main(String[] args) throws IOException {
-        new StreamDriver(new Aggregator("src/main/resources/example_input.txt")).run();
+//        new StreamDriver(new Aggregator("C:\\IdeaProjects\\aggregator\\src\\main\\resources\\example_input.txt")).run();
+//        new StreamDriver(new Aggregator("src/main/resources/example_input.txt")).run();
+//        new StreamDriver(new Aggregator("src/main/resources/input.txt")).run();
+//        new StreamDriver(new Aggregator("src/main/resources/large_input.txt")).run();
+        new StreamDriver(new Aggregator("src/main/resources/very_huge_input.txt")).run();
     }
 
     public static Observable<InstrumentPrice> checkNonFutureAndBusinessDay(Observable<InstrumentPrice> prices) {

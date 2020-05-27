@@ -4,6 +4,7 @@ import java.io.*;
 import rx.Observable;
 import rx.observables.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
 
 /**
@@ -27,10 +28,8 @@ public class Aggregator {
     }
 
     public Aggregator(InputStream inputStream) {
-        this(StringObservable.split(StringObservable.from(
-                new InputStreamReader(inputStream, Charset.forName("UTF-8"))),
-                "(\r)?\n").publish()
-        );
+//        this(StringObservable.split(StringObservable.from(new InputStreamReader(inputStream, Charset.forName("UTF-8"))), "(\r)?\n").publish());
+        this(StringObservable.split(StringObservable.from(new InputStreamReader(inputStream, StandardCharsets.UTF_8)), "(\r)?\n").publish());
     }
 
     public Aggregator(String fileName) throws FileNotFoundException {

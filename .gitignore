@@ -99,3 +99,6 @@ hs_err_pid*
 # Spring Bootstrap artifacts
 dependency-reduced-pom.xml
 README.html
+
+# custom
+very_huge_input.txt
