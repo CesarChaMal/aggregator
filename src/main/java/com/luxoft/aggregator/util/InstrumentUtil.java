@@ -30,8 +30,8 @@ public class InstrumentUtil {
 		String todayDate = df.format(today);
 		String date = df.format(rand);
 
-		System.out.println(date);
-		System.out.println(today);
+//		System.out.println(date);
+//		System.out.println(today);
 		return date;
 	} 
 	

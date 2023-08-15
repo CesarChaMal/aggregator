@@ -5,20 +5,21 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.text.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 public class InstrumentFileGenerator {
 
 	private static final int BATCH_SIZE = 10000;
-	private static final DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private static final NumberFormat formatter = new DecimalFormat("#0.00000");
-	private static final String from = "2000-01-01 00:00:00";
-	private static final String to = "2023-01-01 00:00:00";
+//	private static boolean loggingEnabled = false; // Turn off logging by default
+private static final AtomicBoolean loggingEnabled = new AtomicBoolean(false); // Turn off logging by default
 
 	public static void generateInstrument(String filePath, long count) throws IOException {
 		File fout = new File(filePath);
@@ -31,8 +32,12 @@ public class InstrumentFileGenerator {
 			Date fromDate = dateRange.getFromDate();
 			Date toDate = dateRange.getToDate();
 
+//			DateUtil2.DateRange dateRange = DateUtil2.getDefaultDateRange();
+//			LocalDateTime fromDate = dateRange.getFromDate();
+//			LocalDateTime toDate = dateRange.getToDate();
+
 			int counter = 1;
-			String instrument = ""; 
+			String instrument = "";
 //			for (int i = 1; i <= 10; i++) {
 //			for (int i = 1; i <= 200; i++) {
 //			for (int i = 1; i <= 5000; i++) {
@@ -57,11 +62,11 @@ public class InstrumentFileGenerator {
 					
 				String date = InstrumentUtil.generateRandomDateRange(fromDate, toDate);
 				Double number = Double.parseDouble(formatter.format(InstrumentUtil.generateRandomNumberDouble(0, 100)));
-				String instrumentGenerated = instrument + "," + date + "," + number;
-				System.out.println("\n" + "instrumentGenerated:" + instrumentGenerated + "\n");
-				showFileSize(fout);
+				String line = instrument + "," + date + "," + number;
+				log("\n" + "instrumentGenerated:" + line + "\n");
+//				showFileSize(fout);
 				
-				bw.write(instrumentGenerated);
+				bw.write(line);
 				bw.newLine();
 			}
 		}
@@ -98,7 +103,8 @@ public class InstrumentFileGenerator {
 						return instrument + "," + date + "," + number;
 					})
 					.forEach(line -> {
-						System.out.println("\n" + "instrumentGenerated: " + line + "\n");
+						log("\n" + "instrumentGenerated: " + line + "\n");
+
 						try {
 							bw.write(line);
 							bw.newLine();
@@ -123,7 +129,11 @@ public class InstrumentFileGenerator {
 				String instrument = "INSTRUMENT" + (i % 4 == 0 ? InstrumentUtil.generateRandomNumberInteger(1, 100) : (i % 100 + 1));
 				String date = InstrumentUtil.generateRandomDateRange(fromDate, toDate);
 				Double number = Double.parseDouble(formatter.format(InstrumentUtil.generateRandomNumberDouble(0, 100)));
-				batch.append(instrument).append(",").append(date).append(",").append(number).append("\n");
+
+				String line = instrument + "," + date + "," + number;
+				batch.append(line).append("\n");
+				log("\n" + "instrumentGenerated: " + line + "\n");
+
 				if (i % BATCH_SIZE == 0) {
 					bw.write(batch.toString());
 					batch.setLength(0);
@@ -158,9 +168,21 @@ public class InstrumentFileGenerator {
 		}
 	}
 
+	// Enable or disable logging
+	public static void setLoggingEnabled(boolean enabled) {
+		loggingEnabled.set(enabled);
+	}
+
+	private static void log(String message) {
+		if (loggingEnabled.get()) {
+			System.out.println(message);
+		}
+	}
+
 	public static void main(String[] args) {
 		try {
 			int[] sizesInMB = new int[] { 5, 10, 100, 300, 1024 };
+			setLoggingEnabled(false);
 
 			for (int sizeInMB : sizesInMB) {
 				List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -190,8 +212,6 @@ public class InstrumentFileGenerator {
 						System.out.println("File generated: " + filePath);
 					}));
 				}
-
-				System.out.println("Files generated for size: " + sizeInMB + "MB");
 
 				CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
 				allOf.join();

@@ -3,10 +3,11 @@ package com.luxoft.aggregator.util;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 public class DateUtil {
 
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final ThreadLocal<SimpleDateFormat> sdf = ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US));
     private static final String from = "2000-01-01 00:00:00";
     private static final String to = "2023-01-01 00:00:00";
 
@@ -15,8 +16,8 @@ public class DateUtil {
         Date toDate = null;
 
         try {
-            fromDate = sdf.parse(from);
-            toDate = sdf.parse(to);
+            fromDate = sdf.get().parse(from);
+            toDate = sdf.get().parse(to);
         } catch (ParseException e) {
             e.printStackTrace();
         }
