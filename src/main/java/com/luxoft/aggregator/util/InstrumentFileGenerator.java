@@ -5,12 +5,20 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.text.*;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 public class InstrumentFileGenerator {
+
+	private static final int BATCH_SIZE = 10000;
+	private static final DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	private static final NumberFormat formatter = new DecimalFormat("#0.00000");
+	private static final String from = "2000-01-01 00:00:00";
+	private static final String to = "2023-01-01 00:00:00";
 
 	public static void generateInstrument(String filePath, long count) throws IOException {
 		File fout = new File(filePath);
@@ -19,19 +27,9 @@ public class InstrumentFileGenerator {
 		try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos))) {
 			
 //			DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
-			DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			String from = "2000-01-01 00:00:00";
-			String to = "2023-01-01 00:00:00";
-			Date fromDate = null;
-			Date toDate = null;
-			NumberFormat formatter = new DecimalFormat("#0.00000");     
-
-			try {
-				fromDate = sdf.parse(from);
-				toDate = sdf.parse(to);
-			} catch (ParseException e1) {
-				e1.printStackTrace();
-			}
+			DateUtil.DateRange dateRange = DateUtil.getDefaultDateRange();
+			Date fromDate = dateRange.getFromDate();
+			Date toDate = dateRange.getToDate();
 
 			int counter = 1;
 			String instrument = ""; 
@@ -70,20 +68,9 @@ public class InstrumentFileGenerator {
 	}
 
 	public static void generateInstrumentFunctional(String filePath, long count) {
-		DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		String from = "2000-01-01 00:00:00";
-		String to = "2023-01-01 00:00:00";
-		NumberFormat formatter = new DecimalFormat("#0.00000");
-
-		Date fromDate;
-		Date toDate;
-		try {
-			fromDate = sdf.parse(from);
-			toDate = sdf.parse(to);
-		} catch (ParseException e) {
-			e.printStackTrace();
-			return;
-		}
+		DateUtil.DateRange dateRange = DateUtil.getDefaultDateRange();
+		Date fromDate = dateRange.getFromDate();
+		Date toDate = dateRange.getToDate();
 
 		AtomicInteger counter = new AtomicInteger(1);
 
@@ -125,6 +112,29 @@ public class InstrumentFileGenerator {
 		}
 	}
 
+	public static void generateInstrumentOptimized(String filePath, long count) throws IOException {
+		DateUtil.DateRange dateRange = DateUtil.getDefaultDateRange();
+		Date fromDate = dateRange.getFromDate();
+		Date toDate = dateRange.getToDate();
+
+		try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
+			StringBuilder batch = new StringBuilder();
+			for (long i = 1; i <= count; i++) {
+				String instrument = "INSTRUMENT" + (i % 4 == 0 ? InstrumentUtil.generateRandomNumberInteger(1, 100) : (i % 100 + 1));
+				String date = InstrumentUtil.generateRandomDateRange(fromDate, toDate);
+				Double number = Double.parseDouble(formatter.format(InstrumentUtil.generateRandomNumberDouble(0, 100)));
+				batch.append(instrument).append(",").append(date).append(",").append(number).append("\n");
+				if (i % BATCH_SIZE == 0) {
+					bw.write(batch.toString());
+					batch.setLength(0);
+				}
+			}
+			if (batch.length() > 0) {
+				bw.write(batch.toString());
+			}
+		}
+	}
+
 	public static void showFileSize(File file) {
 		if (file.exists()) {
 			double bytes = file.length();
@@ -150,30 +160,40 @@ public class InstrumentFileGenerator {
 
 	public static void main(String[] args) {
 		try {
-			int[] sizesInMB = new int[] {5, 10, 100, 300, 1024};
+			int[] sizesInMB = new int[] { 5, 10, 100, 300, 1024 };
 
-			for(int sizeInMB : sizesInMB) {
-				String filePath1 = "src/main/resources/instrument_test_input_" + sizeInMB + "MB_1.txt";
-				String filePath2 = "src/main/resources/instrument_test_input_" + sizeInMB + "MB_2.txt";
-				long count = FileSizeCalculator.calculateCountForSize(sizeInMB);
+			for (int sizeInMB : sizesInMB) {
+				List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-				CompletableFuture<Void> future1 = CompletableFuture.runAsync(() -> {
-					try {
-						InstrumentFileGenerator.generateInstrument(filePath1, count);
-					} catch (IOException e) {
-						throw new RuntimeException(e);
-					}
-				}).thenRun(() -> {
-					System.out.println("File generated: " + filePath1);
-				});
+				for (int i = 1; i <= 3; i++) {
+					final int fileIndex = i; // to use inside lambda
+					String filePath = "src/main/resources/instrument_test_input_" + sizeInMB + "MB_" + fileIndex + ".txt";
+					long count = FileSizeCalculator.calculateCountForSize(sizeInMB);
 
-				CompletableFuture<Void> future2 = CompletableFuture.runAsync(() -> {
-					InstrumentFileGenerator.generateInstrumentFunctional(filePath2, count);
-				}).thenRun(() -> {
-					System.out.println("File generated: " + filePath2);
-				});
+					futures.add(CompletableFuture.runAsync(() -> {
+						try {
+							switch (fileIndex) {
+								case 1:
+									InstrumentFileGenerator.generateInstrument(filePath, count);
+									break;
+								case 2:
+									InstrumentFileGenerator.generateInstrumentFunctional(filePath, count);
+									break;
+								case 3:
+									InstrumentFileGenerator.generateInstrumentOptimized(filePath, count);
+									break;
+							}
+						} catch (IOException e) {
+							throw new RuntimeException(e);
+						}
+					}).thenRun(() -> {
+						System.out.println("File generated: " + filePath);
+					}));
+				}
 
-				CompletableFuture<Void> allOf = CompletableFuture.allOf(future1, future2);
+				System.out.println("Files generated for size: " + sizeInMB + "MB");
+
+				CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
 				allOf.join();
 
 				System.out.println("Files generated for size: " + sizeInMB + "MB");
