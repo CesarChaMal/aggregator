@@ -6,16 +6,18 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.text.*;
 import java.util.Date;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 public class InstrumentFileGenerator {
 
-	private static final String FILE_PATH = "src/main/resources/very_huge_input_1gb.txt";
+	private static final String FILE_PATH1 = "src/main/resources/very_huge_input_1gb_1.txt";
+	private static final String FILE_PATH2 = "src/main/resources/very_huge_input_1gb_2.txt";
 	private static final int MAX_COUNT = 100000000;
 
 	public static void generateInstrument() throws IOException {
-		File fout = new File(FILE_PATH);
+		File fout = new File(FILE_PATH1);
 		FileOutputStream fos = new FileOutputStream(fout);
 
 		try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos))) {
@@ -71,7 +73,7 @@ public class InstrumentFileGenerator {
 		}
 	}
 
-	public static void generateInstrumentFunctional() throws IOException {
+	public static void generateInstrumentFunctional() {
 		DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		String from = "2000-01-01 00:00:00";
 		String to = "2023-01-01 00:00:00";
@@ -89,38 +91,42 @@ public class InstrumentFileGenerator {
 
 		AtomicInteger counter = new AtomicInteger(1);
 
-		// Ensure the file exists or create it
-		Files.write(Paths.get(FILE_PATH), "".getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+		try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(FILE_PATH2), StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
 
-		Stream.iterate(1L, i -> i + 1)
-				.limit(MAX_COUNT)
-				.map(i -> {
-					String instrument = "INSTRUMENT" + counter.get();
-					if (counter.get() > 3) {
-						if (i % 100 == 0) {
-							counter.set(0);
-						}
-						if (i % 5 == 0) {
-							instrument = "INSTRUMENT" + InstrumentUtil.generateRandomNumberInteger(1, 100);
-						}
-						counter.incrementAndGet();
-					} else {
-						if (i % 100 == 0) {
+			Stream.iterate(1L, i -> i + 1)
+					.limit(MAX_COUNT)
+					.map(i -> {
+						String instrument = "INSTRUMENT" + counter.get();
+						if (counter.get() > 3) {
+							if (i % 100 == 0) {
+								counter.set(0);
+							}
+							if (i % 5 == 0) {
+								instrument = "INSTRUMENT" + InstrumentUtil.generateRandomNumberInteger(1, 100);
+							}
 							counter.incrementAndGet();
+						} else {
+							if (i % 100 == 0) {
+								counter.incrementAndGet();
+							}
 						}
-					}
-					String date = InstrumentUtil.generateRandomDateRange(fromDate, toDate);
-					Double number = Double.parseDouble(formatter.format(InstrumentUtil.generateRandomNumberDouble(0, 100)));
-					return instrument + "," + date + "," + number;
-				})
-				.forEach(line -> {
-					System.out.println("\n" + "instrumentGenerated: " + line + "\n");
-					try {
-						Files.write(Paths.get(FILE_PATH), (line + System.lineSeparator()).getBytes(), StandardOpenOption.APPEND);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				});
+						String date = InstrumentUtil.generateRandomDateRange(fromDate, toDate);
+						Double number = Double.parseDouble(formatter.format(InstrumentUtil.generateRandomNumberDouble(0, 100)));
+						return instrument + "," + date + "," + number;
+					})
+					.forEach(line -> {
+						System.out.println("\n" + "instrumentGenerated: " + line + "\n");
+						try {
+							bw.write(line);
+							bw.newLine();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					});
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public static void showFileSize(File file) {
@@ -148,9 +154,37 @@ public class InstrumentFileGenerator {
 
 	public static void main(String[] args) {
 		try {
-//			InstrumentFileGenerator.generateInstrument();
-			InstrumentFileGenerator.generateInstrumentFunctional();
-		} catch (IOException e) {
+			long startTimeForMethod1 = System.currentTimeMillis();
+			long startTimeForMethod2 = System.currentTimeMillis();
+			long startTimeForBothMethods = System.currentTimeMillis();
+
+			CompletableFuture<Void> future1 = CompletableFuture.runAsync(() -> {
+				try {
+					InstrumentFileGenerator.generateInstrument();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			}).thenRun(() -> {
+				long endTimeForMethod1 = System.currentTimeMillis();
+				long elapsedTimeForMethod1 = endTimeForMethod1 - startTimeForMethod1;
+				System.out.println("Elapsed time for generateInstrument: " + elapsedTimeForMethod1 + " milliseconds");
+			});
+
+			CompletableFuture<Void> future2 = CompletableFuture.runAsync(() -> {
+				InstrumentFileGenerator.generateInstrumentFunctional();
+			}).thenRun(() -> {
+				long endTimeForMethod2 = System.currentTimeMillis();
+				long elapsedTimeForMethod2 = endTimeForMethod2 - startTimeForMethod2;
+				System.out.println("Elapsed time for generateInstrumentFunctional: " + elapsedTimeForMethod2 + " milliseconds");
+			});
+
+			CompletableFuture<Void> allOf = CompletableFuture.allOf(future1, future2);
+			allOf.join();
+
+			long endTimeForBothMethods = System.currentTimeMillis();
+			long elapsedTimeForBothMethods = endTimeForBothMethods - startTimeForBothMethods;
+			System.out.println("Elapsed time for both methods: " + elapsedTimeForBothMethods + " milliseconds");
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
