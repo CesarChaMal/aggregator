@@ -42,7 +42,7 @@ public class StreamDriver {
 //        new StreamDriver(new Aggregator("src/main/resources/example_input.txt")).run();
 //        new StreamDriver(new Aggregator("src/main/resources/input.txt")).run();
 //        new StreamDriver(new Aggregator("src/main/resources/large_input.txt")).run();
-        new StreamDriver(new Aggregator("src/main/resources/very_huge_input_1gb.txt")).run();
+        new StreamDriver(new Aggregator("src/main/resources/instrument_test_input_1024MB_1.txt")).run();
     }
 
     public static Observable<InstrumentPrice> checkNonFutureAndBusinessDay(Observable<InstrumentPrice> prices) {

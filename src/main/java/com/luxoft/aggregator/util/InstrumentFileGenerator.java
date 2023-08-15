@@ -153,8 +153,8 @@ public class InstrumentFileGenerator {
 			int[] sizesInMB = new int[] {5, 10, 100, 300, 1024};
 
 			for(int sizeInMB : sizesInMB) {
-				String filePath1 = "src/main/resources/very_huge_input_" + sizeInMB + "MB_1.txt";
-				String filePath2 = "src/main/resources/very_huge_input_" + sizeInMB + "MB_2.txt";
+				String filePath1 = "src/main/resources/instrument_test_input_" + sizeInMB + "MB_1.txt";
+				String filePath2 = "src/main/resources/instrument_test_input_" + sizeInMB + "MB_2.txt";
 				long count = FileSizeCalculator.calculateCountForSize(sizeInMB);
 
 				CompletableFuture<Void> future1 = CompletableFuture.runAsync(() -> {
