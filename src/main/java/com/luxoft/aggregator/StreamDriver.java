@@ -28,7 +28,7 @@ public class StreamDriver {
         Observable<InstrumentPrice> validPrices = agg.attach(StreamDriver::checkNonFutureAndBusinessDay);
 
         enrichPrice(validPrices, multiplierProvider)
-                .subscribe(new Flusher(new FileOutputStream("multiplied.txt")));
+                .subscribe(new Flusher(new FileOutputStream("src/main/resources/multiplied.txt")));
 
         Observable.combineLatest(meanOfInstr1(validPrices), meanOfInstr2(validPrices), maxOfInstr3(validPrices),
                 sumOfMostNewInstrumentPrices(validPrices), Arrays::asList)
