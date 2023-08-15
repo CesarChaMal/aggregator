@@ -12,12 +12,8 @@ import java.util.stream.Stream;
 
 public class InstrumentFileGenerator {
 
-	private static final String FILE_PATH1 = "src/main/resources/very_huge_input_1gb_1.txt";
-	private static final String FILE_PATH2 = "src/main/resources/very_huge_input_1gb_2.txt";
-	private static final int MAX_COUNT = 100000000;
-
-	public static void generateInstrument() throws IOException {
-		File fout = new File(FILE_PATH1);
+	public static void generateInstrument(String filePath, long count) throws IOException {
+		File fout = new File(filePath);
 		FileOutputStream fos = new FileOutputStream(fout);
 
 		try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos))) {
@@ -44,7 +40,7 @@ public class InstrumentFileGenerator {
 //			for (int i = 1; i <= 5000; i++) {
 //			for (int i = 1; i <= 1000; i++) {
 //			for (long i = 1; i <= 10000000; i++) { // 330 mb
-			for (long i = 1; i <= MAX_COUNT ; i++) { // 1.5 gb
+			for (long i = 1; i <= count ; i++) { // 1.5 gb
 				instrument = "INSTRUMENT" + counter;
 				
 				if (counter > 3){
@@ -73,7 +69,7 @@ public class InstrumentFileGenerator {
 		}
 	}
 
-	public static void generateInstrumentFunctional() {
+	public static void generateInstrumentFunctional(String filePath, long count) {
 		DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		String from = "2000-01-01 00:00:00";
 		String to = "2023-01-01 00:00:00";
@@ -91,10 +87,10 @@ public class InstrumentFileGenerator {
 
 		AtomicInteger counter = new AtomicInteger(1);
 
-		try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(FILE_PATH2), StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
+		try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(filePath), StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
 
 			Stream.iterate(1L, i -> i + 1)
-					.limit(MAX_COUNT)
+					.limit(count)
 					.map(i -> {
 						String instrument = "INSTRUMENT" + counter.get();
 						if (counter.get() > 3) {
@@ -154,36 +150,34 @@ public class InstrumentFileGenerator {
 
 	public static void main(String[] args) {
 		try {
-			long startTimeForMethod1 = System.currentTimeMillis();
-			long startTimeForMethod2 = System.currentTimeMillis();
-			long startTimeForBothMethods = System.currentTimeMillis();
+			int[] sizesInMB = new int[] {5, 10, 100, 300, 1024};
 
-			CompletableFuture<Void> future1 = CompletableFuture.runAsync(() -> {
-				try {
-					InstrumentFileGenerator.generateInstrument();
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			}).thenRun(() -> {
-				long endTimeForMethod1 = System.currentTimeMillis();
-				long elapsedTimeForMethod1 = endTimeForMethod1 - startTimeForMethod1;
-				System.out.println("Elapsed time for generateInstrument: " + elapsedTimeForMethod1 + " milliseconds");
-			});
+			for(int sizeInMB : sizesInMB) {
+				String filePath1 = "src/main/resources/very_huge_input_" + sizeInMB + "MB_1.txt";
+				String filePath2 = "src/main/resources/very_huge_input_" + sizeInMB + "MB_2.txt";
+				long count = FileSizeCalculator.calculateCountForSize(sizeInMB);
 
-			CompletableFuture<Void> future2 = CompletableFuture.runAsync(() -> {
-				InstrumentFileGenerator.generateInstrumentFunctional();
-			}).thenRun(() -> {
-				long endTimeForMethod2 = System.currentTimeMillis();
-				long elapsedTimeForMethod2 = endTimeForMethod2 - startTimeForMethod2;
-				System.out.println("Elapsed time for generateInstrumentFunctional: " + elapsedTimeForMethod2 + " milliseconds");
-			});
+				CompletableFuture<Void> future1 = CompletableFuture.runAsync(() -> {
+					try {
+						InstrumentFileGenerator.generateInstrument(filePath1, count);
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+				}).thenRun(() -> {
+					System.out.println("File generated: " + filePath1);
+				});
 
-			CompletableFuture<Void> allOf = CompletableFuture.allOf(future1, future2);
-			allOf.join();
+				CompletableFuture<Void> future2 = CompletableFuture.runAsync(() -> {
+					InstrumentFileGenerator.generateInstrumentFunctional(filePath2, count);
+				}).thenRun(() -> {
+					System.out.println("File generated: " + filePath2);
+				});
 
-			long endTimeForBothMethods = System.currentTimeMillis();
-			long elapsedTimeForBothMethods = endTimeForBothMethods - startTimeForBothMethods;
-			System.out.println("Elapsed time for both methods: " + elapsedTimeForBothMethods + " milliseconds");
+				CompletableFuture<Void> allOf = CompletableFuture.allOf(future1, future2);
+				allOf.join();
+
+				System.out.println("Files generated for size: " + sizeInMB + "MB");
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
