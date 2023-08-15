@@ -35,7 +35,7 @@ private static final AtomicBoolean loggingEnabled = new AtomicBoolean(false); //
 //			DateUtil2.DateRange dateRange = DateUtil2.getDefaultDateRange();
 //			LocalDateTime fromDate = dateRange.getFromDate();
 //			LocalDateTime toDate = dateRange.getToDate();
-
+			
 			int counter = 1;
 			String instrument = "";
 //			for (int i = 1; i <= 10; i++) {
@@ -194,6 +194,8 @@ private static final AtomicBoolean loggingEnabled = new AtomicBoolean(false); //
 
 					futures.add(CompletableFuture.runAsync(() -> {
 						try {
+							long startTime = System.nanoTime();
+
 							switch (fileIndex) {
 								case 1:
 									InstrumentFileGenerator.generateInstrument(filePath, count);
@@ -205,6 +207,12 @@ private static final AtomicBoolean loggingEnabled = new AtomicBoolean(false); //
 									InstrumentFileGenerator.generateInstrumentOptimized(filePath, count);
 									break;
 							}
+
+							long endTime = System.nanoTime();
+							long duration = (endTime - startTime) / 1_000_000; // Convert to milliseconds
+
+							System.out.println("File generation method " + fileIndex + " took: " + duration + " ms");
+
 						} catch (IOException e) {
 							throw new RuntimeException(e);
 						}
