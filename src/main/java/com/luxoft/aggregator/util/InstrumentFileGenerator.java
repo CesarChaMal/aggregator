@@ -63,8 +63,8 @@ private static final AtomicBoolean loggingEnabled = new AtomicBoolean(false); //
 				String date = InstrumentUtil.generateRandomDateRange(fromDate, toDate);
 				Double number = Double.parseDouble(formatter.format(InstrumentUtil.generateRandomNumberDouble(0, 100)));
 				String line = instrument + "," + date + "," + number;
-				log("\n" + "instrumentGenerated:" + line + "\n");
-//				showFileSize(fout);
+				Logger.log("\n" + "instrumentGenerated:" + line + "\n");
+//				Logger.showFileSize(fout);
 				
 				bw.write(line);
 				bw.newLine();
@@ -103,7 +103,7 @@ private static final AtomicBoolean loggingEnabled = new AtomicBoolean(false); //
 						return instrument + "," + date + "," + number;
 					})
 					.forEach(line -> {
-						log("\n" + "instrumentGenerated: " + line + "\n");
+						Logger.log("\n" + "instrumentGenerated: " + line + "\n");
 
 						try {
 							bw.write(line);
@@ -132,7 +132,7 @@ private static final AtomicBoolean loggingEnabled = new AtomicBoolean(false); //
 
 				String line = instrument + "," + date + "," + number;
 				batch.append(line).append("\n");
-				log("\n" + "instrumentGenerated: " + line + "\n");
+				Logger.log("\n" + "instrumentGenerated: " + line + "\n");
 
 				if (i % BATCH_SIZE == 0) {
 					bw.write(batch.toString());
@@ -145,44 +145,10 @@ private static final AtomicBoolean loggingEnabled = new AtomicBoolean(false); //
 		}
 	}
 
-	public static void showFileSize(File file) {
-		if (file.exists()) {
-			double bytes = file.length();
-			double kilobytes = bytes / 1024;
-			double megabytes = bytes / (1024 * 1024);
-			double gigabytes = bytes / (1024 * 1024 * 1024);
-
-			System.out.printf("File size: %.2f bytes\n", bytes);
-
-			if (kilobytes > 1) {
-				System.out.printf("File size: %.2f KB\n", kilobytes);
-			}
-			if (megabytes > 1) {
-				System.out.printf("File size: %.2f MB\n", megabytes);
-			}
-			if (gigabytes > 1) {
-				System.out.printf("File size: %.2f GB\n", gigabytes);
-			}
-		} else {
-			System.out.println("File does not exist!");
-		}
-	}
-
-	// Enable or disable logging
-	public static void setLoggingEnabled(boolean enabled) {
-		loggingEnabled.set(enabled);
-	}
-
-	private static void log(String message) {
-		if (loggingEnabled.get()) {
-			System.out.println(message);
-		}
-	}
-
 	public static void main(String[] args) {
 		try {
 			int[] sizesInMB = new int[] { 5, 10, 100, 300, 1024 };
-			setLoggingEnabled(false);
+			Logger.setLoggingEnabled(false);
 
 			for (int sizeInMB : sizesInMB) {
 				List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -211,20 +177,20 @@ private static final AtomicBoolean loggingEnabled = new AtomicBoolean(false); //
 							long endTime = System.nanoTime();
 							long duration = (endTime - startTime) / 1_000_000; // Convert to milliseconds
 
-							System.out.println("File generation method " + fileIndex + " took: " + duration + " ms");
+							Logger.forceLog("File generation method " + fileIndex + " took: " + duration + " ms");
+							Logger.forceLog("File generated: " + filePath);
 
 						} catch (IOException e) {
+							Logger.forceLog("Error encountered while generating file: " + e.getMessage());
 							throw new RuntimeException(e);
 						}
-					}).thenRun(() -> {
-						System.out.println("File generated: " + filePath);
 					}));
 				}
 
 				CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
 				allOf.join();
 
-				System.out.println("Files generated for size: " + sizeInMB + "MB");
+				Logger.forceLog("Files generated for size: " + sizeInMB + "MB");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
