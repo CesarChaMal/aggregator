@@ -147,7 +147,8 @@ private static final AtomicBoolean loggingEnabled = new AtomicBoolean(false); //
 
 	public static void main(String[] args) {
 		try {
-			int[] sizesInMB = new int[] { 5, 10, 100, 300, 1024 };
+//			int[] sizesInMB = new int[] { 1, 5, 10, 20, 30, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1024 };
+			int[] sizesInMB = new int[] { 1, 5, 10, 20, 30, 50, 100 };
 			Logger.setLoggingEnabled(false);
 
 			for (int sizeInMB : sizesInMB) {
