@@ -16,7 +16,7 @@ public class MassDataGenerator {
         List<String> strings = StringObservable.split(
                 StringObservable.from(
 //                        new InputStreamReader(new FileInputStream("src/main/resources/instrument_test_input_5MB_1.txt"))),
-                        new InputStreamReader(new FileInputStream("src/main/resources/instrument_test_input_1024MB_1.txt"))),
+                        new InputStreamReader(new FileInputStream("src/main/resources/instrument_test_input_300MB_1.txt"))),
                 "(\r)?\n").toList().toBlocking().single();
 
         Iterator<String> infinite = Iterators.cycle(strings);
