@@ -14,14 +14,11 @@ import java.util.function.Function;
 public class Aggregator {
     private ConnectableObservable<String> stream;
 
-    Observable<Either<InstrumentPrice, Tuple<String, Exception>>> parsed =
-            Observable.defer(() -> stream.map(new InstrumentPriceParser()));
+    Observable<Either<InstrumentPrice, Tuple<String, Exception>>> parsed = Observable.defer(() -> stream.map(new InstrumentPriceParser()));
 
-    Observable<Tuple<String, Exception>> failedToParse =
-            Observable.defer(() -> parsed.filter(Either::isRight).map(Either::right));
+    Observable<Tuple<String, Exception>> failedToParse = Observable.defer(() -> parsed.filter(Either::isRight).map(Either::right));
 
-    private Observable<InstrumentPrice> prices =
-            Observable.defer(() -> parsed.filter(Either::isLeft).map(Either::left));
+    private Observable<InstrumentPrice> prices = Observable.defer(() -> parsed.filter(Either::isLeft).map(Either::left));
 
     public Aggregator(ConnectableObservable<String> stream) {
         this.stream = stream;

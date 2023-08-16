@@ -27,8 +27,7 @@ public class StreamDriver {
 
         Observable<InstrumentPrice> validPrices = agg.attach(StreamDriver::checkNonFutureAndBusinessDay);
 
-        enrichPrice(validPrices, multiplierProvider)
-                .subscribe(new Flusher(new FileOutputStream("src/main/resources/multiplied.txt")));
+        enrichPrice(validPrices, multiplierProvider).subscribe(new Flusher(new FileOutputStream("src/main/resources/multiplied.txt")));
 
         Observable.combineLatest(meanOfInstr1(validPrices), meanOfInstr2(validPrices), maxOfInstr3(validPrices),
                 sumOfMostNewInstrumentPrices(validPrices), Arrays::asList)
@@ -42,7 +41,12 @@ public class StreamDriver {
 //        new StreamDriver(new Aggregator("src/main/resources/example_input.txt")).run();
 //        new StreamDriver(new Aggregator("src/main/resources/input.txt")).run();
 //        new StreamDriver(new Aggregator("src/main/resources/large_input.txt")).run();
-        new StreamDriver(new Aggregator("src/main/resources/instrument_test_input_1024MB_1.txt")).run();
+//        new StreamDriver(new Aggregator("src/main/resources/instrument_test_input_1024MB_1.txt")).run();
+
+        Observable<String> massData = MassDataGenerator.createFromFile();
+        Aggregator aggregator = new Aggregator(massData.publish());
+        new StreamDriver(aggregator).run();
+
     }
 
     public static Observable<InstrumentPrice> checkNonFutureAndBusinessDay(Observable<InstrumentPrice> prices) {
