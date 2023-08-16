@@ -23,6 +23,7 @@ public class MassDataGenerator {
         return Observable.create(new Observable.OnSubscribe<String>() {
             public void call(Subscriber<? super String> subscriber) {
                 for (int i = 0; i < 1000000000; i++) {
+//                for (int i = 0; i < 100000000; i++) {
                     try {
                         if (infinite.hasNext())
                             subscriber.onNext(infinite.next());
